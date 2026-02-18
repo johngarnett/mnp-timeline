@@ -121,23 +121,26 @@ h1 {
    box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
    max-width: 320px !important;
 }
-.tooltip-title {
+.vis-tooltip div:first-child {
    font-weight: bold;
    margin-bottom: 4px;
    font-size: 1.05em;
 }
-.tooltip-time { color: #999; font-size: 0.9em; margin-bottom: 6px; }
-.score-table {
+.vis-tooltip div:nth-child(2) { color: #999; font-size: 0.9em; margin-bottom: 6px; }
+.vis-tooltip table {
    border-collapse: collapse;
    width: 100%;
    margin-top: 4px;
 }
-.score-table th, .score-table td {
+.vis-tooltip th, .vis-tooltip td {
    padding: 2px 8px;
    text-align: left;
    border-bottom: 1px solid #444;
 }
-.score-table th { color: #999; font-size: 0.85em; }
+.vis-tooltip th:first-child, .vis-tooltip td:first-child {
+   padding-right: 24px;
+}
+.vis-tooltip th { color: #999; font-size: 0.85em; }
 
 /* Round divider background bands */
 .round-divider {
