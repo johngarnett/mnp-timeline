@@ -5,6 +5,7 @@ const DEFAULT_WEEK = '3'
 const DEFAULT_VENUE = 'T4B'
 
 let timeline = null
+let dataVersion = ''
 
 const seasonEl = document.getElementById('season')
 const weekEl = document.getElementById('week')
@@ -23,10 +24,17 @@ function populateSelect(el, values, defaultVal) {
    }
 }
 
+async function fetchVersion() {
+   const res = await fetch('/mnp-timeline/api/version')
+   const { buildDate } = await res.json()
+   dataVersion = buildDate
+}
+
 async function fetchFilters(opts = {}) {
    const params = new URLSearchParams()
    if (opts.season) params.set('season', opts.season)
    if (opts.week) params.set('week', opts.week)
+   if (dataVersion) params.set('v', dataVersion)
    const res = await fetch(`/mnp-timeline/api/filters?${params}`)
    return res.json()
 }
@@ -290,6 +298,7 @@ async function loadMatches() {
       if (venue && venue !== '(all)') {
          url += `&venue=${encodeURIComponent(venue)}`
       }
+      if (dataVersion) url += `&v=${encodeURIComponent(dataVersion)}`
       const res = await fetch(url)
       if (!res.ok) {
          const err = await res.json()
@@ -310,5 +319,7 @@ async function loadMatches() {
 
 document.getElementById('loadBtn').addEventListener('click', loadMatches)
 
-// Initialize dropdowns then auto-load
-loadSeasons().then(() => loadMatches())
+// Fetch version, initialize dropdowns, then auto-load
+fetchVersion()
+   .then(() => loadSeasons())
+   .then(() => loadMatches())

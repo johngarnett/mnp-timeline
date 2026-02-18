@@ -13,7 +13,10 @@ console.log('Loading mnp-timeline.json...')
 const raw = fs.readFileSync(DATA_PATH, 'utf8')
 const data = JSON.parse(raw)
 const players = data.players || {}
+const buildDate = (data.metadata && data.metadata.buildDate) || 'unknown'
 console.log(`Loaded ${data.seasons.length} seasons, ${Object.keys(players).length} players`)
+
+const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60
 
 function resolvePlayerNames(matches) {
    return matches.map(match => ({
@@ -33,7 +36,13 @@ function resolvePlayerNames(matches) {
 
 app.use(express.static(path.join(__dirname, 'public')))
 
+app.get('/api/version', (req, res) => {
+   res.set('Cache-Control', 'no-cache')
+   res.json({ buildDate })
+})
+
 app.get('/api/filters', (req, res) => {
+   res.set('Cache-Control', `public, max-age=${ONE_WEEK_SECONDS}`)
    const seasonNum = parseInt(req.query.season, 10)
    const weekNum = parseInt(req.query.week, 10)
 
@@ -61,6 +70,7 @@ app.get('/api/filters', (req, res) => {
 })
 
 app.get('/api/matches', (req, res) => {
+   res.set('Cache-Control', `public, max-age=${ONE_WEEK_SECONDS}`)
    const seasonNum = parseInt(req.query.season, 10)
    const weekNum = parseInt(req.query.week, 10)
    const venue = req.query.venue
