@@ -4,14 +4,16 @@ const { program } = require('commander')
 const path = require('path')
 const fs = require('fs')
 
+const DEFAULT_PORT = 3000
+
 program
    .option('--proxy-prefix <prefix>', 'URL prefix for API routes (e.g. /mnp-timeline)')
+   .option('--port <number>', 'server port number', String(DEFAULT_PORT))
    .parse()
 
 const opts = program.opts()
 const proxyPrefix = opts.proxyPrefix || ''
-
-const PORT = 3000
+const PORT = parseInt(opts.port, 10)
 const DATA_PATH = path.join(__dirname, '..', 'data', 'mnp-timeline.json')
 
 const app = express()
