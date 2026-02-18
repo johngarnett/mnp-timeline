@@ -1,3 +1,5 @@
+// Copyright 2026 John Garnett
+
 const TIMELINE_PADDING_MS = 5 * 60 * 1000
 const EVENT_MARKER_DURATION_MS = 30 * 1000
 const DEFAULT_SEASON = '23'

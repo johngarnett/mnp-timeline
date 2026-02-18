@@ -1,3 +1,5 @@
+// Copyright 2026 John Garnett
+
 const express = require('express')
 const compression = require('compression')
 const { program } = require('commander')

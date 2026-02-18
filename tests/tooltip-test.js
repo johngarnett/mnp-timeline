@@ -1,3 +1,4 @@
+// Copyright 2026 John Garnett
 const { chromium } = require('playwright')
 
 ;(async () => {

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright 2026 John Garnett
 import os
 import sys
 import base64

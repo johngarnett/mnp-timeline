@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Copyright 2026 John Garnett
 
 const fs = require('fs')
 const path = require('path')
