@@ -46,7 +46,7 @@ function resolvePlayerNames(matches) {
             ...machine,
             players: machine.players.map(p => ({
                ...p,
-               name: players[p.id] || p.id
+               name: players[p.id] || (p.id ? p.id.slice(-7) : p.id)
             }))
          }))
       }))
