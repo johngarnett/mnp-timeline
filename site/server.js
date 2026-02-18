@@ -1,4 +1,5 @@
 const express = require('express')
+const compression = require('compression')
 const path = require('path')
 const fs = require('fs')
 
@@ -6,6 +7,7 @@ const PORT = 3000
 const DATA_PATH = path.join(__dirname, '..', 'data', 'mnp-timeline.json')
 
 const app = express()
+app.use(compression())
 
 console.log('Loading mnp-timeline.json...')
 const raw = fs.readFileSync(DATA_PATH, 'utf8')
