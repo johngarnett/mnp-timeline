@@ -2,6 +2,10 @@
 
 An interactive timeline visualization for Seattle's Monday Night Pinball league matches. View the flow of each match night — picking, responding, game play, score reporting, and confirmations — rendered as a zoomable, scrollable timeline.
 
+Copyright 2026 John Garnett
+
+Use of this code is governed by the MIT open source license https://opensource.org/license/mit
+
 ## Prerequisites
 
 - Node.js (v18 or later)
