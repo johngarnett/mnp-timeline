@@ -4,7 +4,9 @@
   "description": "",
   "main": "build-data.js",
   "scripts": {
-    "build": "node build-data.js",
+    "build": "npm run build:site && npm run build:data",
+    "build:data": "node build-data.js",
+    "build:site": "node build-version.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
