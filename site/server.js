@@ -16,6 +16,9 @@ const players = data.players || {}
 const buildDate = (data.metadata && data.metadata.buildDate) || 'unknown'
 console.log(`Loaded ${data.seasons.length} seasons, ${Object.keys(players).length} players`)
 
+const metadata = data.metadata || {}
+const buildVersion = metadata.version || 'unknown'
+
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60
 
 function resolvePlayerNames(matches) {
@@ -34,7 +37,19 @@ function resolvePlayerNames(matches) {
    }))
 }
 
-app.use(express.static(path.join(__dirname, 'public')))
+const indexTemplate = fs.readFileSync(
+   path.join(__dirname, 'public', 'index.html'), 'utf8'
+)
+const indexHtml = indexTemplate.replace(/%%BUILD_VERSION%%/g, encodeURIComponent(buildVersion))
+
+app.get('/', (req, res) => {
+   res.set('Cache-Control', 'no-cache')
+   res.type('html').send(indexHtml)
+})
+
+app.use(express.static(path.join(__dirname, 'public'), {
+   maxAge: ONE_WEEK_SECONDS * 1000
+}))
 
 app.get('/api/version', (req, res) => {
    res.set('Cache-Control', 'no-cache')
