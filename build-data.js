@@ -2,10 +2,17 @@
 
 const fs = require('fs')
 const path = require('path')
+const { execSync } = require('child_process')
 const { program } = require('commander')
 const { loadPosts, printSummary, toArrays } = require('./load-posts')
 
-const pkg = require('./package.json')
+function getVersion() {
+   try {
+      return execSync('git describe --tags --always', { encoding: 'utf8' }).trim()
+   } catch {
+      return 'unknown'
+   }
+}
 const DEFAULT_OUTPUT = 'data/mnp-timeline.json'
 
 program
@@ -34,7 +41,7 @@ console.log('\nConverting to arrays...')
 const output = toArrays(result.data)
 
 output.metadata = {
-   version: pkg.version,
+   version: getVersion(),
    buildDate: new Date().toISOString(),
    nodeJsVersion: process.version,
    options: {
