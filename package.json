@@ -7,7 +7,7 @@
     "build": "npm run build:site && npm run build:data",
     "build:data": "node build-data.js",
     "build:site": "node build-version.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.js"
   },
   "keywords": [],
   "author": "",

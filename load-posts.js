@@ -633,4 +633,16 @@ function toArrays(data) {
    }
 }
 
-module.exports = { loadPosts, printSummary, toArrays }
+module.exports = {
+   loadPosts,
+   printSummary,
+   toArrays,
+   playerCountForRound,
+   ensurePath,
+   extractMachines,
+   extractAssignments,
+   extractScores,
+   numericSort,
+   buildRounds,
+   formatSeattleTime
+}
