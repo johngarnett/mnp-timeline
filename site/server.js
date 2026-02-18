@@ -1,13 +1,23 @@
 const express = require('express')
 const compression = require('compression')
+const { program } = require('commander')
 const path = require('path')
 const fs = require('fs')
+
+program
+   .option('--proxy-prefix <prefix>', 'URL prefix for API routes (e.g. /mnp-timeline)')
+   .parse()
+
+const opts = program.opts()
+const proxyPrefix = opts.proxyPrefix || ''
 
 const PORT = 3000
 const DATA_PATH = path.join(__dirname, '..', 'data', 'mnp-timeline.json')
 
 const app = express()
 app.use(compression())
+
+const VERSION_PATH = path.join(__dirname, '..', 'data', 'version.json')
 
 console.log('Loading mnp-timeline.json...')
 const raw = fs.readFileSync(DATA_PATH, 'utf8')
@@ -16,8 +26,14 @@ const players = data.players || {}
 const buildDate = (data.metadata && data.metadata.buildDate) || 'unknown'
 console.log(`Loaded ${data.seasons.length} seasons, ${Object.keys(players).length} players`)
 
-const metadata = data.metadata || {}
-const buildVersion = metadata.version || 'unknown'
+let buildVersion = 'unknown'
+try {
+   const versionData = JSON.parse(fs.readFileSync(VERSION_PATH, 'utf8'))
+   buildVersion = versionData.version || 'unknown'
+   console.log(`App version: ${buildVersion}`)
+} catch {
+   console.warn('Warning: could not read version.json')
+}
 
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60
 
@@ -40,7 +56,9 @@ function resolvePlayerNames(matches) {
 const indexTemplate = fs.readFileSync(
    path.join(__dirname, 'public', 'index.html'), 'utf8'
 )
-const indexHtml = indexTemplate.replace(/%%BUILD_VERSION%%/g, encodeURIComponent(buildVersion))
+const indexHtml = indexTemplate
+   .replace(/%%BUILD_VERSION%%/g, encodeURIComponent(buildVersion))
+   .replace(/%%PROXY_PREFIX%%/g, proxyPrefix)
 
 app.get('/', (req, res) => {
    res.set('Cache-Control', 'no-cache')

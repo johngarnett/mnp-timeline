@@ -25,7 +25,7 @@ function populateSelect(el, values, defaultVal) {
 }
 
 async function fetchVersion() {
-   const res = await fetch('/mnp-timeline/api/version')
+   const res = await fetch(`${API_PREFIX}/api/version`)
    const { buildDate } = await res.json()
    dataVersion = buildDate
 }
@@ -35,7 +35,7 @@ async function fetchFilters(opts = {}) {
    if (opts.season) params.set('season', opts.season)
    if (opts.week) params.set('week', opts.week)
    if (dataVersion) params.set('v', dataVersion)
-   const res = await fetch(`/mnp-timeline/api/filters?${params}`)
+   const res = await fetch(`${API_PREFIX}/api/filters?${params}`)
    return res.json()
 }
 
@@ -294,7 +294,7 @@ async function loadMatches() {
    document.getElementById('timeline').innerHTML = '<div id="loading">Loading...</div>'
 
    try {
-      let url = `/mnp-timeline/api/matches?season=${season}&week=${week}`
+      let url = `${API_PREFIX}/api/matches?season=${season}&week=${week}`
       if (venue && venue !== '(all)') {
          url += `&venue=${encodeURIComponent(venue)}`
       }
