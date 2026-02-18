@@ -90,6 +90,26 @@ node site/server.js --proxy-prefix /mnp-timeline
 
 The prefix is injected into the client so API calls route through the proxy correctly. When accessing the server directly, omit this flag.
 
+## Testing
+
+### Unit tests
+
+Run unit tests with the Node.js built-in test runner (no extra dependencies needed):
+
+```bash
+npm test
+```
+
+Test files are in `tests/` and follow the `*.test.js` naming convention. To add a new test file, create `tests/<name>.test.js` — it will be picked up automatically by `npm test`.
+
+### Playwright UI tests
+
+Playwright UI tests require the server to be running on localhost:3000 first:
+
+```bash
+node tests/tooltip-test.js
+```
+
 ## Using the Timeline
 
 - **Filters**: Use the Season, Week, and Venue dropdowns to select which matches to display. The dropdowns cascade — changing the season updates the available weeks, and changing the week updates the available venues. Select `(all)` for venue to show all matches for that week.

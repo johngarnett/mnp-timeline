@@ -32,6 +32,22 @@ node site/server.js --proxy-prefix /mnp-timeline  # Behind reverse proxy
 
 ## Testing
 
+### Unit tests
+Unit tests use the Node.js built-in test runner (`node:test` and `node:assert/strict`). No additional dependencies required.
+```bash
+npm test                          # Run all unit tests
+node --test tests/*.test.js       # Equivalent direct command
+```
+
+Test files live in `tests/` and follow the `*.test.js` naming convention. Tests cover pure functions exported from `load-posts.js` and `site/server.js`.
+
+To add new unit tests:
+- Create a `tests/<module>.test.js` file
+- Import `describe` and `it` from `node:test`, `assert` from `node:assert/strict`
+- Export any pure functions you need to test from the source module
+- The `npm test` glob (`tests/*.test.js`) picks up new files automatically
+
+### Playwright UI tests
 Playwright UI tests require the server to be running on localhost:3000 first:
 ```bash
 node tests/tooltip-test.js
