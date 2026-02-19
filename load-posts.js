@@ -19,6 +19,10 @@ const MACHINE_PATH_RE = /^\/machines$/
 const SCRIMMAGE_WEEK = 'S'
 const IGNORED_SEASONS = new Set(['13'])
 
+// Offset constants for timeline duration calculations
+const RESPONDING_START_OFFSET_MS = 60 * 1000
+const GAME_START_OFFSET_MS = 60 * 1000
+
 // Round player counts
 const FOUR_PLAYER_ROUNDS = new Set([1, 4])
 const TWO_PLAYER_ROUNDS = new Set([2, 3])
@@ -525,6 +529,13 @@ function buildRounds(events) {
          if (report) {
             result.reported = { epoch: report.when, local: report.whenSeattle }
             if (report.photoId) result.photoId = report.photoId
+            // Game duration: from game start to report time
+            const gameStart = responding
+               ? responding.when + GAME_START_OFFSET_MS
+               : report.when
+            if (gameStart < report.when) {
+               result.duration = report.when - gameStart
+            }
          }
          result.players = players
 
@@ -534,9 +545,15 @@ function buildRounds(events) {
       const round = { round: roundNum }
       if (picking) {
          round.picking = { epoch: picking.when, local: picking.whenSeattle }
+         if (responding) {
+            round.picking.duration = responding.when - picking.when
+         }
       }
       if (responding) {
          round.responding = { epoch: responding.when, local: responding.whenSeattle }
+         if (picking) {
+            round.responding.duration = responding.when - (picking.when + RESPONDING_START_OFFSET_MS)
+         }
       }
       round.machines = machines
 

@@ -204,6 +204,106 @@ describe('buildRounds', () => {
    it('returns empty array for no events', () => {
       assert.deepEqual(buildRounds([]), [])
    })
+
+   it('computes picking duration when responding exists', () => {
+      const events = [
+         {
+            type: 'picking', round: 1, when: 100000,
+            whenSeattle: '1/1/2026, 12:00:00 AM',
+            machines: [{ machine: 1, name: 'TZ', players: [{ player: 1, id: 'p1' }] }]
+         },
+         {
+            type: 'responding', round: 1, when: 200000,
+            whenSeattle: '1/1/2026, 12:01:40 AM',
+            assignments: [{ machine: 1, players: [{ player: 2, id: 'p2' }] }]
+         }
+      ]
+      const rounds = buildRounds(events)
+      assert.equal(rounds[0].picking.duration, 100000)
+   })
+
+   it('does not set picking duration when no responding', () => {
+      const events = [
+         {
+            type: 'picking', round: 1, when: 100000,
+            whenSeattle: '1/1/2026, 12:00:00 AM',
+            machines: [{ machine: 1, name: 'TZ', players: [{ player: 1, id: 'p1' }] }]
+         }
+      ]
+      const rounds = buildRounds(events)
+      assert.equal(rounds[0].picking.duration, undefined)
+   })
+
+   it('computes responding duration when picking exists', () => {
+      const events = [
+         {
+            type: 'picking', round: 1, when: 100000,
+            whenSeattle: '1/1/2026, 12:00:00 AM',
+            machines: [{ machine: 1, name: 'TZ', players: [{ player: 1, id: 'p1' }] }]
+         },
+         {
+            type: 'responding', round: 1, when: 200000,
+            whenSeattle: '1/1/2026, 12:01:40 AM',
+            assignments: [{ machine: 1, players: [{ player: 2, id: 'p2' }] }]
+         }
+      ]
+      const rounds = buildRounds(events)
+      // responding.duration = responding.when - (picking.when + 60000)
+      assert.equal(rounds[0].responding.duration, 200000 - (100000 + 60000))
+   })
+
+   it('does not set responding duration when no picking', () => {
+      const events = [
+         {
+            type: 'responding', round: 1, when: 200000,
+            whenSeattle: '1/1/2026, 12:01:40 AM',
+            assignments: [{ machine: 1, players: [{ player: 2, id: 'p2' }] }]
+         }
+      ]
+      const rounds = buildRounds(events)
+      assert.equal(rounds[0].responding.duration, undefined)
+   })
+
+   it('computes game duration when responding and report exist', () => {
+      const events = [
+         {
+            type: 'picking', round: 1, when: 100000,
+            whenSeattle: '1/1/2026, 12:00:00 AM',
+            machines: [{ machine: 1, name: 'TZ', players: [{ player: 1, id: 'p1' }] }]
+         },
+         {
+            type: 'responding', round: 1, when: 200000,
+            whenSeattle: '1/1/2026, 12:01:40 AM',
+            assignments: [{ machine: 1, players: [{ player: 2, id: 'p2' }] }]
+         },
+         {
+            type: 'report', round: 1, game: 1, when: 500000,
+            whenSeattle: '1/1/2026, 12:05:00 AM',
+            scores: { 1: '1000000', 2: '500000' }
+         }
+      ]
+      const rounds = buildRounds(events)
+      // game duration = report.when - (responding.when + 60000)
+      assert.equal(rounds[0].machines[0].duration, 500000 - (200000 + 60000))
+   })
+
+   it('does not set game duration when no responding', () => {
+      const events = [
+         {
+            type: 'picking', round: 1, when: 100000,
+            whenSeattle: '1/1/2026, 12:00:00 AM',
+            machines: [{ machine: 1, name: 'TZ', players: [{ player: 1, id: 'p1' }] }]
+         },
+         {
+            type: 'report', round: 1, game: 1, when: 500000,
+            whenSeattle: '1/1/2026, 12:05:00 AM',
+            scores: { 1: '1000000' }
+         }
+      ]
+      const rounds = buildRounds(events)
+      // gameStart === report.when when no responding, so no duration
+      assert.equal(rounds[0].machines[0].duration, undefined)
+   })
 })
 
 describe('formatSeattleTime', () => {

@@ -3,6 +3,7 @@
 const MNP_MATCH_URL_BASE = 'https://mondaynightpinball.com/matches/mnp'
 const TIMELINE_PADDING_MS = 5 * 60 * 1000
 const EVENT_MARKER_DURATION_MS = 30 * 1000
+const RESPONDING_START_OFFSET_MS = 60 * 1000
 const DEFAULT_SEASON = '23'
 const DEFAULT_WEEK = '3'
 const DEFAULT_VENUE = 'T4B'
@@ -75,18 +76,33 @@ function formatScore(scoreStr) {
    return parseInt(scoreStr, 10).toLocaleString()
 }
 
-function gameTooltip(machine, round) {
+function formatDuration(durationMs) {
+   const totalSeconds = Math.round(durationMs / 1000)
+   const minutes = Math.floor(totalSeconds / 60)
+   const seconds = totalSeconds % 60
+   return `Duration: ${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function gameTooltip(machine, round, durationMs) {
    const playerRows = machine.players.map(p =>
       `<tr><td>${p.name || 'P' + p.player}</td><td>${formatScore(p.score)}</td></tr>`
    ).join('')
+   const durationLine = durationMs != null
+      ? `<div class="tooltip-duration">${formatDuration(durationMs)}</div>`
+      : ''
    return `<div class="tooltip-title">${machine.name}</div>` +
       `<div class="tooltip-time">Round ${round} &middot; ${machine.reported.local}</div>` +
-      `<table class="score-table"><tr><th>Player</th><th>Score</th></tr>${playerRows}</table>`
+      `<table class="score-table"><tr><th>Player</th><th>Score</th></tr>${playerRows}</table>` +
+      durationLine
 }
 
-function eventTooltip(label, timestamp) {
+function eventTooltip(label, timestamp, durationMs) {
+   const durationLine = durationMs != null
+      ? `<div class="tooltip-duration">${formatDuration(durationMs)}</div>`
+      : ''
    return `<div class="tooltip-title">${label}</div>` +
-      `<div class="tooltip-time">${timestamp.local}</div>`
+      `<div class="tooltip-time">${timestamp.local}</div>` +
+      durationLine
 }
 
 function confirmTooltip(side, level, timestamp) {
@@ -192,21 +208,27 @@ function buildTimeline(matches) {
                end: new Date(pickEnd),
                type: 'range',
                className: 'event-picking',
-               title: eventTooltip('Picking', round.picking),
+               title: eventTooltip('Picking', round.picking, round.picking.duration),
                content: ''
             })
          }
 
          // Responding
          if (round.responding) {
+            const respStart = round.picking
+               ? round.picking.epoch + RESPONDING_START_OFFSET_MS
+               : round.responding.epoch
+            const respEnd = round.picking
+               ? round.responding.epoch
+               : round.responding.epoch + EVENT_MARKER_DURATION_MS
             items.add({
                id: itemId++,
                group: roundGroupId,
-               start: new Date(round.responding.epoch),
-               end: new Date(round.responding.epoch + EVENT_MARKER_DURATION_MS),
+               start: new Date(respStart),
+               end: new Date(respEnd),
                type: 'range',
                className: 'event-responding',
-               title: eventTooltip('Responding', round.responding),
+               title: eventTooltip('Responding', round.responding, round.responding.duration),
                content: ''
             })
          }
@@ -225,7 +247,7 @@ function buildTimeline(matches) {
                   end: new Date(machine.reported.epoch),
                   type: 'range',
                   className: 'event-game',
-                  title: gameTooltip(machine, round.round),
+                  title: gameTooltip(machine, round.round, machine.duration),
                   content: machine.name
                })
             }
