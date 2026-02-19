@@ -3,7 +3,7 @@
 const MNP_MATCH_URL_BASE = 'https://mondaynightpinball.com/matches/mnp'
 const TIMELINE_PADDING_MS = 5 * 60 * 1000
 const EVENT_MARKER_DURATION_MS = 30 * 1000
-const RESPONDING_START_OFFSET_MS = 60 * 1000
+const PHASE_TRANSITION_OFFSET_MS = 60 * 1000
 const DEFAULT_SEASON = '23'
 const DEFAULT_WEEK = '3'
 const DEFAULT_VENUE = 'T4B'
@@ -189,6 +189,12 @@ function buildTimeline(matches) {
          }
       }
 
+      // Latest lineup confirmation epoch for round 1 picking bar start
+      const lineupConfirmEpochs = []
+      if (match.confirmLeft) lineupConfirmEpochs.push(match.confirmLeft.epoch)
+      if (match.confirmRight) lineupConfirmEpochs.push(match.confirmRight.epoch)
+      const latestLineupConfirm = lineupConfirmEpochs.length > 0 ? Math.max(...lineupConfirmEpochs) : null
+
       match.rounds.forEach((round, ri) => {
          const roundGroupId = `${matchGroupId}-r${ri + 1}`
          groups.add({
@@ -196,16 +202,28 @@ function buildTimeline(matches) {
             content: `Round ${round.round}`
          })
 
-         // Picking
+         // Picking: R1 starts after lineup confirmation + 60s,
+         //          R2+ starts after previous round's latest score confirmation + 60s
          if (round.picking) {
-            const pickEnd = round.responding
-               ? round.picking.epoch + RESPONDING_START_OFFSET_MS
-               : round.picking.epoch + EVENT_MARKER_DURATION_MS
+            let anchorEpoch = null
+            if (ri === 0) {
+               anchorEpoch = latestLineupConfirm
+            } else {
+               const prevRound = match.rounds[ri - 1]
+               const prevConfirmEpochs = []
+               if (prevRound.confirmLeft) prevConfirmEpochs.push(prevRound.confirmLeft.epoch)
+               if (prevRound.confirmRight) prevConfirmEpochs.push(prevRound.confirmRight.epoch)
+               if (prevConfirmEpochs.length > 0) anchorEpoch = Math.max(...prevConfirmEpochs)
+            }
+            const pickStart = anchorEpoch !== null
+               ? anchorEpoch + PHASE_TRANSITION_OFFSET_MS
+               : round.picking.epoch
+            const pickEnd = round.picking.epoch
             items.add({
                id: itemId++,
                group: roundGroupId,
-               start: new Date(round.picking.epoch),
-               end: new Date(pickEnd),
+               start: new Date(pickStart < pickEnd ? pickStart : pickEnd),
+               end: new Date(pickStart < pickEnd ? pickEnd : pickEnd + EVENT_MARKER_DURATION_MS),
                type: 'range',
                className: 'event-picking',
                title: eventTooltip('Picking', round.picking, round.picking.duration),
@@ -213,10 +231,10 @@ function buildTimeline(matches) {
             })
          }
 
-         // Responding
+         // Responding: starts at picking + 60s, ends at responding event
          if (round.responding) {
             const respStart = round.picking
-               ? round.picking.epoch + RESPONDING_START_OFFSET_MS
+               ? round.picking.epoch + PHASE_TRANSITION_OFFSET_MS
                : round.responding.epoch
             const respEnd = round.picking
                ? round.responding.epoch
