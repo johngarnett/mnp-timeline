@@ -205,7 +205,7 @@ describe('buildRounds', () => {
       assert.deepEqual(buildRounds([]), [])
    })
 
-   it('computes picking duration when responding exists', () => {
+   it('does not set picking duration in buildRounds (computed later in toArrays)', () => {
       const events = [
          {
             type: 'picking', round: 1, when: 100000,
@@ -216,18 +216,6 @@ describe('buildRounds', () => {
             type: 'responding', round: 1, when: 200000,
             whenSeattle: '1/1/2026, 12:01:40 AM',
             assignments: [{ machine: 1, players: [{ player: 2, id: 'p2' }] }]
-         }
-      ]
-      const rounds = buildRounds(events)
-      assert.equal(rounds[0].picking.duration, 100000)
-   })
-
-   it('does not set picking duration when no responding', () => {
-      const events = [
-         {
-            type: 'picking', round: 1, when: 100000,
-            whenSeattle: '1/1/2026, 12:00:00 AM',
-            machines: [{ machine: 1, name: 'TZ', players: [{ player: 1, id: 'p1' }] }]
          }
       ]
       const rounds = buildRounds(events)

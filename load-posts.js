@@ -545,9 +545,6 @@ function buildRounds(events) {
       const round = { round: roundNum }
       if (picking) {
          round.picking = { epoch: picking.when, local: picking.whenSeattle }
-         if (responding) {
-            round.picking.duration = responding.when - picking.when
-         }
       }
       if (responding) {
          round.responding = { epoch: responding.when, local: responding.whenSeattle }
@@ -604,6 +601,32 @@ function toArrays(data) {
                const r = assignConfirmToRound(ce)
                if (r && !r.confirmRight) {
                   r.confirmRight = { epoch: ce.when, local: ce.whenSeattle }
+               }
+            }
+
+            // Compute picking durations now that confirmations are assigned
+            for (let i = 0; i < rounds.length; i++) {
+               const r = rounds[i]
+               if (!r.picking) continue
+               // R1: anchor is latest lineup confirmation; R2+: latest score confirmation from previous round
+               let anchorEpoch = null
+               if (i === 0) {
+                  const epochs = []
+                  if (confirmOpponentLeft) epochs.push(confirmOpponentLeft.when)
+                  if (confirmOpponentRight) epochs.push(confirmOpponentRight.when)
+                  if (epochs.length > 0) anchorEpoch = Math.max(...epochs)
+               } else {
+                  const prev = rounds[i - 1]
+                  const epochs = []
+                  if (prev.confirmLeft) epochs.push(prev.confirmLeft.epoch)
+                  if (prev.confirmRight) epochs.push(prev.confirmRight.epoch)
+                  if (epochs.length > 0) anchorEpoch = Math.max(...epochs)
+               }
+               if (anchorEpoch !== null) {
+                  const pickStart = anchorEpoch + RESPONDING_START_OFFSET_MS
+                  if (pickStart < r.picking.epoch) {
+                     r.picking.duration = r.picking.epoch - pickStart
+                  }
                }
             }
 
