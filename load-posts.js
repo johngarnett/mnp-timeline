@@ -74,7 +74,7 @@ function loadPlayers() {
    return players
 }
 
-function loadMatchVenues() {
+function loadMatchVenues(players) {
    const venues = {}
    let seasonDirs
    try {
@@ -94,6 +94,15 @@ function loadMatchVenues() {
             if (match.venue && match.venue.key) {
                venues[match.key] = match.venue.key
             }
+            for (const side of [match.away, match.home]) {
+               if (side && Array.isArray(side.lineup)) {
+                  for (const entry of side.lineup) {
+                     if (entry.key && entry.name && !players[entry.key]) {
+                        players[entry.key] = entry.name
+                     }
+                  }
+               }
+            }
          } catch (e) {
             // skip unreadable files
          }
@@ -105,13 +114,14 @@ function loadMatchVenues() {
 function loadPosts(opts = {}) {
    if (opts.archiveDir) ARCHIVE_DIR = opts.archiveDir
    if (opts.postsDir) POSTS_DIR = opts.postsDir
+   const players = loadPlayers()
    const data = {
       seasons: {},
       teams: {},
       venues: {},
       machines: {},
-      players: loadPlayers(),
-      matchVenues: loadMatchVenues(),
+      players,
+      matchVenues: loadMatchVenues(players),
       skipped: { noise: 0, parseErrors: 0, scrimmages: 0, emptyReports: 0 }
    }
 
