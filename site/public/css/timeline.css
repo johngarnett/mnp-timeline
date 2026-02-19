@@ -164,6 +164,22 @@ h1 {
    border-radius: 3px;
 }
 
+/* Match links */
+#match-links {
+   text-align: center;
+   margin-bottom: 12px;
+   font-size: 0.85em;
+}
+#match-links a {
+   color: #4a90d9;
+   text-decoration: none;
+   margin: 0 10px;
+}
+#match-links a:hover {
+   text-decoration: underline;
+   color: #6ab0f9;
+}
+
 /* Legend */
 #legend {
    display: flex;

@@ -1,5 +1,6 @@
 // Copyright 2026 John Garnett
 
+const MNP_MATCH_URL_BASE = 'https://mondaynightpinball.com/matches/mnp'
 const TIMELINE_PADDING_MS = 5 * 60 * 1000
 const EVENT_MARKER_DURATION_MS = 30 * 1000
 const DEFAULT_SEASON = '23'
@@ -92,6 +93,25 @@ function confirmTooltip(side, level, timestamp) {
    const sideLabel = side === 'Left' ? 'Away (Left)' : 'Home (Right)'
    return `<div class="tooltip-title">${level} Confirm &mdash; ${sideLabel}</div>` +
       `<div class="tooltip-time">${timestamp.local}</div>`
+}
+
+function renderMatchLinks(matches, season, week) {
+   const container = document.getElementById('match-links')
+
+   container.innerHTML = ''
+   matches.forEach(match => {
+      const a = document.createElement('a')
+
+      a.href = `${MNP_MATCH_URL_BASE}-${season}-${week}-${match.away}-${match.home}`
+      a.textContent = `${match.away} @ ${match.home}`
+      a.target = '_blank'
+      a.rel = 'noopener'
+      container.appendChild(a)
+   })
+}
+
+function clearMatchLinks() {
+   document.getElementById('match-links').innerHTML = ''
 }
 
 function buildTimeline(matches) {
@@ -308,12 +328,15 @@ async function loadMatches() {
       }
       const matches = await res.json()
       if (matches.length === 0) {
+         clearMatchLinks()
          document.getElementById('timeline').innerHTML =
             '<div id="loading">No matches found for this filter.</div>'
          return
       }
+      renderMatchLinks(matches, season, week)
       buildTimeline(matches)
    } catch (err) {
+      clearMatchLinks()
       document.getElementById('timeline').innerHTML =
          `<div id="loading" style="color:#e74c3c">Error: ${err.message}</div>`
    }
