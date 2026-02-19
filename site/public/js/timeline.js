@@ -199,7 +199,7 @@ function buildTimeline(matches) {
          // Picking
          if (round.picking) {
             const pickEnd = round.responding
-               ? round.responding.epoch
+               ? round.picking.epoch + RESPONDING_START_OFFSET_MS
                : round.picking.epoch + EVENT_MARKER_DURATION_MS
             items.add({
                id: itemId++,
