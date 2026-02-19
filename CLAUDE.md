@@ -48,10 +48,21 @@ To add new unit tests:
 - The `npm test` glob (`tests/*.test.js`) picks up new files automatically
 
 ### Playwright UI tests
-Playwright UI tests require the server to be running on localhost:3000 first:
+Playwright UI tests verify tooltip content, styling, and visual correctness in a real browser. They require the server to be running on localhost:3000 first.
+
+**Important**: The server loads `data/mnp-timeline.json` into memory at startup. If you rebuild data (`npm run build:data`), you must restart the server before running Playwright tests, or the API will serve stale data.
+
 ```bash
-node tests/tooltip-test.js
+node tests/tooltip-test.js     # Tooltip styling test
+node tests/duration-test.js    # Duration display in tooltips
 ```
+
+When adding Playwright UI tests:
+- Files live in `tests/` and follow the `*-test.js` naming convention (not `*.test.js`, which is the unit test glob)
+- Use `headless: false` so the browser window is visible during development
+- vis-timeline strips `class` attributes from tooltip HTML — query tooltip children by structure (e.g., `div:nth-child(3)`) not by class name
+- Take full-page screenshots with `page.screenshot()`, not element screenshots, to reliably capture floating tooltips
+- Dismiss tooltips between tests by moving the mouse away (`page.mouse.move(0, 0)`)
 
 ## Architecture
 
@@ -69,7 +80,7 @@ node tests/tooltip-test.js
 Seasons → Weeks → Matches → Rounds → Machines → Players/Scores. Events are merged chronologically: multiple picking/responding posts per round get layered together. Score confirmations are assigned retroactively to the nearest prior picking event.
 
 ### vis-timeline tooltip caveat
-The vis-timeline library strips `class` attributes from tooltip HTML. All tooltip styling must use `.vis-tooltip` parent selectors (e.g., `.vis-tooltip table`) not class-based selectors.
+The vis-timeline library strips `class` attributes from tooltip HTML. All tooltip styling must use `.vis-tooltip` parent selectors with structural pseudo-classes or element selectors (e.g., `.vis-tooltip table`, `.vis-tooltip div:nth-child(2)`, `.vis-tooltip div:nth-child(n+3)`) — not class-based selectors. The same applies to querying tooltip elements in Playwright tests.
 
 ## Code Conventions
 
