@@ -8,13 +8,27 @@ const fs = require('fs')
 
 const DEFAULT_PORT = 3000
 
+function resolveUid(obj, playerMap) {
+   if (obj && obj.uid && playerMap[obj.uid]) {
+      return { ...obj, uidName: playerMap[obj.uid] }
+   }
+   return obj
+}
+
 function resolvePlayerNames(matches, playerMap) {
    return matches.map(match => ({
       ...match,
+      confirmLeft: resolveUid(match.confirmLeft, playerMap),
+      confirmRight: resolveUid(match.confirmRight, playerMap),
       rounds: match.rounds.map(round => ({
          ...round,
+         picking: resolveUid(round.picking, playerMap),
+         responding: resolveUid(round.responding, playerMap),
+         confirmLeft: resolveUid(round.confirmLeft, playerMap),
+         confirmRight: resolveUid(round.confirmRight, playerMap),
          machines: round.machines.map(machine => ({
             ...machine,
+            uidName: machine.uid && playerMap[machine.uid] ? playerMap[machine.uid] : undefined,
             players: machine.players.map(p => ({
                ...p,
                name: playerMap[p.id] || (p.id ? p.id.slice(-7) : p.id)

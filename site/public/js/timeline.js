@@ -83,6 +83,11 @@ function formatDuration(durationMs) {
    return `Duration: ${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
+function submittedByLine(uidName) {
+   if (!uidName) return ''
+   return `<div class="tooltip-submitted">Submitted by: ${uidName}</div>`
+}
+
 function gameTooltip(machine, round, durationMs) {
    const playerRows = machine.players.map(p =>
       `<tr><td>${p.name || 'P' + p.player}</td><td>${formatScore(p.score)}</td></tr>`
@@ -93,7 +98,8 @@ function gameTooltip(machine, round, durationMs) {
    return `<div class="tooltip-title">${machine.name}</div>` +
       `<div class="tooltip-time">Round ${round} &middot; ${machine.reported.local}</div>` +
       `<table class="score-table"><tr><th>Player</th><th>Score</th></tr>${playerRows}</table>` +
-      durationLine
+      durationLine +
+      submittedByLine(machine.uidName)
 }
 
 function eventTooltip(label, timestamp, durationMs) {
@@ -102,13 +108,15 @@ function eventTooltip(label, timestamp, durationMs) {
       : ''
    return `<div class="tooltip-title">${label}</div>` +
       `<div class="tooltip-time">${timestamp.local}</div>` +
-      durationLine
+      durationLine +
+      submittedByLine(timestamp.uidName)
 }
 
 function confirmTooltip(side, level, timestamp) {
    const sideLabel = side === 'Left' ? 'Away (Left)' : 'Home (Right)'
    return `<div class="tooltip-title">${level} Confirm &mdash; ${sideLabel}</div>` +
-      `<div class="tooltip-time">${timestamp.local}</div>`
+      `<div class="tooltip-time">${timestamp.local}</div>` +
+      submittedByLine(timestamp.uidName)
 }
 
 function renderMatchLinks(matches, season, week) {
