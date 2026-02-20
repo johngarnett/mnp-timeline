@@ -117,10 +117,14 @@ function roundBreakTooltip(nextRound, durationMs) {
       `<div class="tooltip-duration">${formatDuration(durationMs)}</div>`
 }
 
-function confirmTooltip(side, level, timestamp) {
+function confirmTooltip(side, level, timestamp, durationMs) {
    const sideLabel = side === 'Left' ? 'Away (Left)' : 'Home (Right)'
+   const durationLine = durationMs != null
+      ? `<div class="tooltip-duration">${formatDuration(durationMs)}</div>`
+      : ''
    return `<div class="tooltip-title">${level} Confirm &mdash; ${sideLabel}</div>` +
       `<div class="tooltip-time">${timestamp.local}</div>` +
+      durationLine +
       submittedByLine(timestamp.uidName)
 }
 
@@ -186,17 +190,23 @@ function buildTimeline(matches) {
 
       // Round break range items (scoped to this match)
       for (let ri = 0; ri < match.rounds.length - 1; ri++) {
-         const endEpoch = getRoundEndEpoch(match.rounds[ri])
+         const latestReport = getLatestReportEpoch(match.rounds[ri])
+         const rawStart = latestReport
+            ? latestReport + PHASE_TRANSITION_OFFSET_MS
+            : getRoundEndEpoch(match.rounds[ri])
          const nextRound = match.rounds[ri + 1]
          const gapEnd = nextRound.responding
             ? nextRound.responding.epoch
             : getRoundStartEpoch(nextRound)
-         if (endEpoch && gapEnd) {
-            const gapDuration = gapEnd - endEpoch
+         if (rawStart && gapEnd) {
+            const gapStart = rawStart <= gapEnd
+               ? rawStart
+               : (latestReport + gapEnd) / 2
+            const gapDuration = gapEnd - gapStart
             items.add({
                id: itemId++,
                group: matchGroupId,
-               start: new Date(endEpoch),
+               start: new Date(gapStart),
                end: new Date(gapEnd),
                type: 'range',
                className: 'round-divider',
@@ -289,27 +299,49 @@ function buildTimeline(matches) {
          })
 
          // Round-level score confirmations
+         const latestReport = getLatestReportEpoch(round)
+         const rawConfirmAnchor = latestReport
+            ? latestReport + PHASE_TRANSITION_OFFSET_MS
+            : null
          if (round.confirmLeft) {
+            const confirmEnd = round.confirmLeft.epoch
+            const confirmStart = rawConfirmAnchor
+               ? (rawConfirmAnchor <= confirmEnd
+                  ? rawConfirmAnchor
+                  : (latestReport + confirmEnd) / 2)
+               : confirmEnd
+            const confirmDuration = confirmStart < confirmEnd
+               ? confirmEnd - confirmStart
+               : null
             items.add({
                id: itemId++,
                group: roundGroupId,
-               start: new Date(round.confirmLeft.epoch),
-               end: new Date(round.confirmLeft.epoch + EVENT_MARKER_DURATION_MS),
+               start: new Date(confirmStart),
+               end: new Date(confirmEnd),
                type: 'range',
                className: 'event-confirm-score',
-               title: confirmTooltip('Left', 'Score', round.confirmLeft),
+               title: confirmTooltip('Left', 'Score', round.confirmLeft, confirmDuration),
                content: ''
             })
          }
          if (round.confirmRight) {
+            const confirmEnd = round.confirmRight.epoch
+            const confirmStart = rawConfirmAnchor
+               ? (rawConfirmAnchor <= confirmEnd
+                  ? rawConfirmAnchor
+                  : (latestReport + confirmEnd) / 2)
+               : confirmEnd
+            const confirmDuration = confirmStart < confirmEnd
+               ? confirmEnd - confirmStart
+               : null
             items.add({
                id: itemId++,
                group: roundGroupId,
-               start: new Date(round.confirmRight.epoch),
-               end: new Date(round.confirmRight.epoch + EVENT_MARKER_DURATION_MS),
+               start: new Date(confirmStart),
+               end: new Date(confirmEnd),
                type: 'range',
                className: 'event-confirm-score',
-               title: confirmTooltip('Right', 'Score', round.confirmRight),
+               title: confirmTooltip('Right', 'Score', round.confirmRight, confirmDuration),
                content: ''
             })
          }
@@ -356,6 +388,13 @@ function getRoundEndEpoch(round) {
       if (m.reported) candidates.push(m.reported.epoch)
    })
    return candidates.length > 0 ? Math.max(...candidates) : null
+}
+
+function getLatestReportEpoch(round) {
+   const reportEpochs = round.machines
+      .filter(m => m.reported)
+      .map(m => m.reported.epoch)
+   return reportEpochs.length > 0 ? Math.max(...reportEpochs) : null
 }
 
 function getRoundStartEpoch(round) {
