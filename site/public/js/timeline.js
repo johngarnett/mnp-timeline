@@ -112,6 +112,11 @@ function eventTooltip(label, timestamp, durationMs) {
       submittedByLine(timestamp.uidName)
 }
 
+function roundBreakTooltip(nextRound, durationMs) {
+   return `<div class="tooltip-title">Round ${nextRound} is Next</div>` +
+      `<div class="tooltip-duration">${formatDuration(durationMs)}</div>`
+}
+
 function confirmTooltip(side, level, timestamp) {
    const sideLabel = side === 'Left' ? 'Away (Left)' : 'Home (Right)'
    return `<div class="tooltip-title">${level} Confirm &mdash; ${sideLabel}</div>` +
@@ -179,20 +184,24 @@ function buildTimeline(matches) {
          })
       }
 
-      // Round divider background bands (scoped to this match)
+      // Round break range items (scoped to this match)
       for (let ri = 0; ri < match.rounds.length - 1; ri++) {
          const endEpoch = getRoundEndEpoch(match.rounds[ri])
-         const startEpoch = getRoundStartEpoch(match.rounds[ri + 1])
-         if (endEpoch && startEpoch) {
-            const nextRound = match.rounds[ri + 1].round
+         const nextRound = match.rounds[ri + 1]
+         const gapEnd = nextRound.responding
+            ? nextRound.responding.epoch
+            : getRoundStartEpoch(nextRound)
+         if (endEpoch && gapEnd) {
+            const gapDuration = gapEnd - endEpoch
             items.add({
                id: itemId++,
                group: matchGroupId,
                start: new Date(endEpoch),
-               end: new Date(startEpoch),
-               type: 'background',
+               end: new Date(gapEnd),
+               type: 'range',
                className: 'round-divider',
-               content: `${nextRound}`
+               title: roundBreakTooltip(nextRound.round, gapDuration),
+               content: `${nextRound.round}`
             })
          }
       }
