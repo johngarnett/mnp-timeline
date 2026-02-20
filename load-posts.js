@@ -418,8 +418,8 @@ function buildRounds(events) {
    const pickingByRound = {}
    // Collect responding events per round in chronological order
    const respondingByRound = {}
-   // Find the latest report per round+game
-   const latestReport = {}
+   // First report per round+game sets the timestamp; later reports update scores
+   const gameReport = {}
 
    for (const e of events) {
       if (e.type === 'picking') {
@@ -430,8 +430,13 @@ function buildRounds(events) {
          respondingByRound[e.round].push(e)
       } else if (e.type === 'report') {
          const key = `${e.round}.${e.game}`
-         if (!latestReport[key] || e.when > latestReport[key].when) {
-            latestReport[key] = e
+         const existing = gameReport[key]
+         if (!existing) {
+            gameReport[key] = { ...e, updates: [] }
+         } else {
+            existing.updates.push({ post: e.sourceFile, epoch: e.when, uid: e.ukey })
+            Object.assign(existing.scores, e.scores)
+            if (e.photoId) existing.photoId = e.photoId
          }
       }
    }
@@ -501,7 +506,7 @@ function buildRounds(events) {
    const roundNums = new Set()
    Object.keys(pickingByRound).forEach(r => roundNums.add(parseInt(r)))
    Object.keys(respondingByRound).forEach(r => roundNums.add(parseInt(r)))
-   Object.values(latestReport).forEach(r => roundNums.add(r.round))
+   Object.values(gameReport).forEach(r => roundNums.add(r.round))
 
    return [...roundNums].sort((a, b) => a - b).map(roundNum => {
       const picking = mergePicking(pickingByRound[roundNum])
@@ -525,7 +530,7 @@ function buildRounds(events) {
          allPlayers.sort((a, b) => a.player - b.player)
 
          // Merge scores from report
-         const report = latestReport[`${roundNum}.${m.machine}`]
+         const report = gameReport[`${roundNum}.${m.machine}`]
          const players = allPlayers.map(p => ({
             player: p.player,
             id: p.id,
@@ -538,7 +543,10 @@ function buildRounds(events) {
          }
          if (report) {
             result.reported = { epoch: report.when, local: report.whenSeattle }
+            result.post = report.sourceFile
+            result.uid = report.ukey
             if (report.photoId) result.photoId = report.photoId
+            if (report.updates.length > 0) result.updates = report.updates
             // Game duration: from game start to report time
             const gameStart = responding
                ? responding.when + GAME_START_OFFSET_MS
@@ -554,10 +562,10 @@ function buildRounds(events) {
 
       const round = { round: roundNum }
       if (picking) {
-         round.picking = { epoch: picking.when, local: picking.whenSeattle }
+         round.picking = { epoch: picking.when, local: picking.whenSeattle, uid: picking.ukey }
       }
       if (responding) {
-         round.responding = { epoch: responding.when, local: responding.whenSeattle }
+         round.responding = { epoch: responding.when, local: responding.whenSeattle, uid: responding.ukey }
          if (picking) {
             round.responding.duration = responding.when - (picking.when + RESPONDING_START_OFFSET_MS)
          }
@@ -604,13 +612,13 @@ function toArrays(data) {
             for (const ce of scoreConfirmLeftEvents) {
                const r = assignConfirmToRound(ce)
                if (r && !r.confirmLeft) {
-                  r.confirmLeft = { epoch: ce.when, local: ce.whenSeattle }
+                  r.confirmLeft = { epoch: ce.when, local: ce.whenSeattle, uid: ce.ukey }
                }
             }
             for (const ce of scoreConfirmRightEvents) {
                const r = assignConfirmToRound(ce)
                if (r && !r.confirmRight) {
-                  r.confirmRight = { epoch: ce.when, local: ce.whenSeattle }
+                  r.confirmRight = { epoch: ce.when, local: ce.whenSeattle, uid: ce.ukey }
                }
             }
 
@@ -656,10 +664,10 @@ function toArrays(data) {
                match.venue = venue
             }
             if (confirmOpponentLeft) {
-               match.confirmLeft = { epoch: confirmOpponentLeft.when, local: confirmOpponentLeft.whenSeattle }
+               match.confirmLeft = { epoch: confirmOpponentLeft.when, local: confirmOpponentLeft.whenSeattle, uid: confirmOpponentLeft.ukey }
             }
             if (confirmOpponentRight) {
-               match.confirmRight = { epoch: confirmOpponentRight.when, local: confirmOpponentRight.whenSeattle }
+               match.confirmRight = { epoch: confirmOpponentRight.when, local: confirmOpponentRight.whenSeattle, uid: confirmOpponentRight.ukey }
             }
             match.rounds = rounds
             match.events = filteredEvents
